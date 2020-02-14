@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
 import android.view.TextureView
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.camera.core.*
@@ -20,8 +22,11 @@ import java.io.File
 
 private const val REQUEST_CODE_PERMISSIONS = 10
 private val REQUIRED_PERMISSIONS =
-    arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
-private val tag = MainActivity::class.java.simpleName
+    arrayOf(
+        Manifest.permission.CAMERA,
+        Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
 
 class MainActivity : AppCompatActivity(), LifecycleOwner {
 
@@ -45,7 +50,8 @@ class MainActivity : AppCompatActivity(), LifecycleOwner {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
 
-        val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.mp4")
+        val file = File(externalMediaDirs.first(),
+            "${System.currentTimeMillis()}.mp4")
 
         captureButton.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
@@ -120,10 +126,23 @@ class MainActivity : AppCompatActivity(), LifecycleOwner {
 
 
         preview.setOnPreviewOutputUpdateListener {
+            val parent = viewFinder.parent as ViewGroup
+            parent.removeView(viewFinder)
+            parent.addView(viewFinder,0)
             viewFinder.surfaceTexture = it.surfaceTexture
         }
 
         CameraX.bindToLifecycle(this, preview, videoCapture)
+    }
+
+
+    private fun getFilepath(): File {
+        val folder = File("sdcard/Video Recorder")
+        if (!folder.exists()) {
+            folder.mkdirs()
+        }
+
+        return File(folder, "${System.currentTimeMillis()}.mp4")
     }
 
 }
